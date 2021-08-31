@@ -1,5 +1,9 @@
+#!/usr/bin/env python3
+import sys; assert sys.version_info[0] >= 3, "Python 3 required."
+sys.path.append('../..')
+
 from orchard_pallas import Fp
-from orchard_poseidon import perm
+from orchard_poseidon.permute.fp import perm
 from utils import leos2ip
 from tv_output import render_args, render_tv
 from tv_rand import Rand
@@ -33,7 +37,7 @@ def main():
 
     render_tv(
         render_args(),
-        'orchard_poseidon_hash',
+        'orchard_poseidon/hash/fp',
         (
             ('input', '[[u8; 32]; 2]'),
             ('output', '[u8; 32]'),

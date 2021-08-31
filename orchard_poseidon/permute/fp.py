@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+import sys; assert sys.version_info[0] >= 3, "Python 3 required."
+sys.path.append('../..')
+
 from orchard_pallas import Fp
 import numpy as np
 from itertools import chain
@@ -182,7 +186,7 @@ def main():
 
     render_tv(
         render_args(),
-        'orchard_poseidon',
+        'orchard_poseidon/permute/fp',
         (
             ('initial_state', '[[u8; 32]; 3]'),
             ('final_state', '[[u8; 32]; 3]'),

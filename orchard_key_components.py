@@ -6,7 +6,7 @@ from sapling_key_components import prf_expand
 
 from orchard_generators import NULLIFIER_K_BASE, SPENDING_KEY_BASE, group_hash
 from orchard_pallas import Fp, Scalar, Point
-from orchard_poseidon_hash import poseidon_hash
+from orchard_poseidon.hash.fp import poseidon_hash
 from orchard_commitments import commit_ivk
 from utils import i2leosp, i2lebsp, lebs2osp
 from orchard_utils import to_base, to_scalar
