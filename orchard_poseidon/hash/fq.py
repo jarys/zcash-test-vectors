@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys; assert sys.version_info[0] >= 3, "Python 3 required."
-sys.path.append('../..')
+import os; sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 
 from orchard_vesta import Fq
 from orchard_poseidon.permute.fq import perm
