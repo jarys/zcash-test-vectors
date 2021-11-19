@@ -41,7 +41,9 @@ def encode_unified(receivers):
     hrp = "u"
 
     r_bytes = b"".join([orchard_receiver, sapling_receiver, t_receiver, padding(hrp)])
+    print("r_bytes", r_bytes)
     converted = convertbits(f4jumble(r_bytes), 8, 5)
+    #print("converted", converted)
     return bech32_encode(hrp, converted, Encoding.BECH32M)
 
 def decode_unified(addr_str):
@@ -97,53 +99,67 @@ def main():
     rand = Rand(randbytes)
 
     test_vectors = []
-    for _ in range(0, 10):
-        has_t_addr = rand.bool()
-        if has_t_addr:
-            t_addr = b"".join([rand.b(20)])
-        else:
-            t_addr = None
+    for (has_t_addr, is_p2pkh) in [(False, False), (True, False), (True, True)]:
+        for (has_s_addr, has_o_addr) in [(False, True), (False, True), (True, True)]:
+            #has_t_addr = rand.bool()
+            if has_t_addr:
+                t_addr = b"".join([rand.b(20)])
+            else:
+                t_addr = None
 
-        has_s_addr = rand.bool()
-        if has_s_addr:
-            sapling_sk = sapling_key_components.SpendingKey(rand.b(32))
-            sapling_default_d = sapling_sk.default_d()
-            sapling_default_pk_d = sapling_sk.default_pkd()
-            sapling_raw_addr = b"".join([sapling_default_d[:11], bytes(sapling_default_pk_d)[:32]])
-        else:
-            sapling_raw_addr = None
+            #has_s_addr = rand.bool()
+            if has_s_addr:
+                sapling_sk = sapling_key_components.SpendingKey(rand.b(32))
+                sapling_default_d = sapling_sk.default_d()
+                sapling_default_pk_d = sapling_sk.default_pkd()
+                sapling_raw_addr = b"".join([sapling_default_d[:11], bytes(sapling_default_pk_d)[:32]])
+            else:
+                sapling_raw_addr = None
 
-        has_o_addr = (not has_s_addr) or rand.bool()
-        if has_o_addr:
-            orchard_sk = orchard_key_components.SpendingKey(rand.b(32))
-            orchard_fvk = orchard_key_components.FullViewingKey(orchard_sk)
-            orchard_default_d = orchard_fvk.default_d()
-            orchard_default_pk_d = orchard_fvk.default_pkd()
-            orchard_raw_addr = b"".join([orchard_default_d[:11], bytes(orchard_default_pk_d)[:32]])
-        else:
-            orchard_raw_addr = None
+            #has_o_addr = (not has_s_addr) or rand.bool()
+            if has_o_addr:
+                orchard_sk = orchard_key_components.SpendingKey(rand.b(32))
+                orchard_fvk = orchard_key_components.FullViewingKey(orchard_sk)
+                orchard_default_d = orchard_fvk.default_d()
+                orchard_default_pk_d = orchard_fvk.default_pkd()
+                orchard_raw_addr = b"".join([orchard_default_d[:11], bytes(orchard_default_pk_d)[:32]])
+            else:
+                orchard_raw_addr = None
 
-        is_p2pkh = rand.bool()
-        receivers = [
-            orchard_raw_addr,
-            sapling_raw_addr,
-            (is_p2pkh, t_addr)
-        ]
-        ua = encode_unified(receivers)
+            #is_p2pkh = rand.bool()
+            receivers = [
+                orchard_raw_addr,
+                sapling_raw_addr,
+                (is_p2pkh, t_addr)
+            ]
+            ua = encode_unified(receivers)
 
-        decoded = decode_unified(ua)
-        assert decoded.get('orchard') == orchard_raw_addr
-        assert decoded.get('sapling') == sapling_raw_addr
-        assert decoded.get('transparent') == t_addr
+            decoded = decode_unified(ua)
+            assert decoded.get('orchard') == orchard_raw_addr
+            assert decoded.get('sapling') == sapling_raw_addr
+            assert decoded.get('transparent') == t_addr
 
-        test_vectors.append({
-            'p2pkh_bytes': t_addr if is_p2pkh else None,
-            'p2sh_bytes': None if is_p2pkh else t_addr,
-            'sapling_raw_addr': sapling_raw_addr,
-            'orchard_raw_addr': orchard_raw_addr,
-            'unified_addr': ua.encode()
-        })
+            test_vectors.append({
+                'p2pkh_bytes': t_addr if is_p2pkh else None,
+                'p2sh_bytes': None if is_p2pkh else t_addr,
+                'sapling_raw_addr': sapling_raw_addr,
+                'orchard_raw_addr': orchard_raw_addr,
+                'unified_addr': ua.encode()
+            })
 
+    hex_or_none = lambda x: None if x == None else "unhexlify(\"{}\")".format(x.hex())
+    for tv in test_vectors:
+        print("\t({")
+        if tv["p2pkh_bytes"]:
+            print("\t\tP2PKH: {},".format(hex_or_none(tv["p2pkh_bytes"])))
+        if tv["p2sh_bytes"]:
+            print("\t\tP2SH: {},".format(hex_or_none(tv["p2sh_bytes"])))
+        if tv["sapling_raw_addr"]:
+            print("\t\tSAPLING: {},".format(hex_or_none(tv["sapling_raw_addr"])))
+        if tv["orchard_raw_addr"]:
+            print("\t\tORCHARD: {},".format(hex_or_none(tv["orchard_raw_addr"])))
+        print("\t{},\"{}\"),".format("}", tv["unified_addr"].decode()))
+    """
     render_tv(
         args,
         'unified_address',
@@ -168,7 +184,7 @@ def main():
         ),
         test_vectors,
     )
-
+    """
 
 if __name__ == "__main__":
     main()

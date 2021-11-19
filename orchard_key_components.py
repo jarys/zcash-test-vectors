@@ -3,6 +3,7 @@ import sys; assert sys.version_info[0] >= 3, "Python 3 required."
 
 from ff1 import ff1_aes256_encrypt
 from sapling_key_components import prf_expand
+from pyblake2 import blake2b
 
 from orchard_generators import NULLIFIER_K_BASE, SPENDING_KEY_BASE, group_hash
 from orchard_pallas import Fp, Scalar, Point
@@ -73,6 +74,23 @@ class FullViewingKey(object):
     def default_pkd(self):
         return self.default_gd() * Scalar(self.ivk().s)
 
+H = 1<<31
+
+class ZIP32OrchardNode:
+    def __init__(self, sk, c):
+        self.sk = sk
+        self.c = c
+
+    @staticmethod
+    def master(secret):
+        I = blake2b(person=b'ZcashIP32Orchard', data=secret).digest()
+        return ZIP32OrchardNode(sk=I[:32],c=I[32:])
+
+    def child(self, i):
+        if not (i & H):
+            raise ValueError
+        I = prf_expand(self.c, bytes([0x81]) + self.sk + i2leosp(32, i))
+        return ZIP32OrchardNode(sk=I[:32],c=I[32:])
 
 def main():
     args = render_args()
@@ -91,7 +109,9 @@ def main():
 
     test_vectors = []
     for _ in range(0, 10):
-        sk = SpendingKey(rand.b(32))
+        seed = rand.b(32)
+        m = ZIP32OrchardNode.master(seed)
+        sk = SpendingKey(m.child(32|H).child(133|H).child(0|H).sk)
         fvk = FullViewingKey(sk)
         default_d = fvk.default_d()
         default_pk_d = fvk.default_pkd()
@@ -110,6 +130,7 @@ def main():
         note_nf = derive_nullifier(fvk.nk, note_rho, note.psi, note_cm)
 
         test_vectors.append({
+            'seed': seed,
             'sk': sk.data,
             'ask': bytes(sk.ask),
             'ak': bytes(fvk.ak),
@@ -126,11 +147,24 @@ def main():
             'note_cmx': bytes(note_cm.extract()),
             'note_nf': bytes(note_nf),
         })
+        
+    print("TESTVECTORS = [")
+    for tv in test_vectors:
+        print("\t{")
+        for (key, value) in tv.items():
+            if key == "note_v":
+                print(f"\t\t\"{key}\": {value},")
+            else:
+                print(f"\t\t\"{key}\": unhexlify(\"{value.hex()}\"),")
+        print("\t},")
+    print("]")
 
+    """
     render_tv(
         args,
         'orchard_key_components',
         (
+            ('seed', '[u8; 32]'),
             ('sk', '[u8; 32]'),
             ('ask', '[u8; 32]'),
             ('ak', '[u8; 32]'),
@@ -149,6 +183,7 @@ def main():
         ),
         test_vectors,
     )
+    """
 
 
 if __name__ == '__main__':

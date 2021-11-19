@@ -114,6 +114,17 @@ def main():
             'jumbled': jumbled,
         })
 
+    print("TESTVECTORS_F4JUMBLE = [")
+    for tv in plain_test_vectors:
+        if len(tv["normal"]) > 200:
+            continue
+        print("\t{")
+        print("\t\t\"normal\": unhexlify(\"{}\"),".format(tv["normal"].hex()))
+        print("\t\t\"jumbled\": unhexlify(\"{}\"),".format(tv["jumbled"].hex()))
+        print("\t},")
+    print("]")
+
+    """
     render_tv(
         args,
         'f4jumble',
@@ -123,7 +134,7 @@ def main():
         ),
         plain_test_vectors,
     )
-
+    """
 
 if __name__ == "__main__":
     main()
