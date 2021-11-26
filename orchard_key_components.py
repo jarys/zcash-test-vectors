@@ -74,24 +74,6 @@ class FullViewingKey(object):
     def default_pkd(self):
         return self.default_gd() * Scalar(self.ivk().s)
 
-H = 1<<31
-
-class ZIP32OrchardNode:
-    def __init__(self, sk, c):
-        self.sk = sk
-        self.c = c
-
-    @staticmethod
-    def master(secret):
-        I = blake2b(person=b'ZcashIP32Orchard', data=secret).digest()
-        return ZIP32OrchardNode(sk=I[:32],c=I[32:])
-
-    def child(self, i):
-        if not (i & H):
-            raise ValueError
-        I = prf_expand(self.c, bytes([0x81]) + self.sk + i2leosp(32, i))
-        return ZIP32OrchardNode(sk=I[:32],c=I[32:])
-
 def main():
     args = render_args()
 
@@ -109,9 +91,7 @@ def main():
 
     test_vectors = []
     for _ in range(0, 10):
-        seed = rand.b(32)
-        m = ZIP32OrchardNode.master(seed)
-        sk = SpendingKey(m.child(32|H).child(133|H).child(0|H).sk)
+        sk = SpendingKey(rand.b(32))
         fvk = FullViewingKey(sk)
         default_d = fvk.default_d()
         default_pk_d = fvk.default_pkd()
@@ -130,7 +110,6 @@ def main():
         note_nf = derive_nullifier(fvk.nk, note_rho, note.psi, note_cm)
 
         test_vectors.append({
-            'seed': seed,
             'sk': sk.data,
             'ask': bytes(sk.ask),
             'ak': bytes(fvk.ak),
