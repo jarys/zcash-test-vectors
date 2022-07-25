@@ -148,17 +148,22 @@ def main():
             })
 
     hex_or_none = lambda x: None if x == None else "unhexlify(\"{}\")".format(x.hex())
+    print("[")
     for tv in test_vectors:
-        print("\t({")
+        print("\t{")
+        print("\t\t\"receivers\": {")
         if tv["p2pkh_bytes"]:
-            print("\t\tP2PKH: {},".format(hex_or_none(tv["p2pkh_bytes"])))
+            print("\t\t\tP2PKH: {},".format(hex_or_none(tv["p2pkh_bytes"])))
         if tv["p2sh_bytes"]:
-            print("\t\tP2SH: {},".format(hex_or_none(tv["p2sh_bytes"])))
+            print("\t\t\tP2SH: {},".format(hex_or_none(tv["p2sh_bytes"])))
         if tv["sapling_raw_addr"]:
-            print("\t\tSAPLING: {},".format(hex_or_none(tv["sapling_raw_addr"])))
+            print("\t\t\tSAPLING: {},".format(hex_or_none(tv["sapling_raw_addr"])))
         if tv["orchard_raw_addr"]:
-            print("\t\tORCHARD: {},".format(hex_or_none(tv["orchard_raw_addr"])))
-        print("\t{},\"{}\"),".format("}", tv["unified_addr"].decode()))
+            print("\t\t\tORCHARD: {},".format(hex_or_none(tv["orchard_raw_addr"])))
+        print("\t\t},")
+        print("\t\t\"address\": \"{}\",".format(tv["unified_addr"].decode()))
+        print("\t},")
+    print("]")
     """
     render_tv(
         args,

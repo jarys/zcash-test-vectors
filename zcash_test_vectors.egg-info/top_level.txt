@@ -1,0 +1,2 @@
+trezor_test_vectors
+zcash_test_vectors
